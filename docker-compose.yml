@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+
+  #PHP Service
+  app:
+    build: dev-docker
+    container_name: exchange-rate-sync
+    working_dir: /app
+    environment:
+      - PHP_MEMORY_LIMIT=-1
+      - WEB_DOCUMENT_ROOT=/app/public
+    ports:
+      - "8080:80"
+      - "443:443"
+    volumes:
+      - .:/app
+    tty: true
+
+  #MySQL Service
+  db:
+    image: mysql:8.0.32
+    container_name: exchange-rate-sync-db
+    command: [ '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci','--default-authentication-plugin=mysql_native_password' ]
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db-data:/var/lib/mysql
+
+volumes:
+  db-data:
