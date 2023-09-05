@@ -36,8 +36,8 @@ class ExchangeRateController extends Controller
     /**
      * @OA\Get(
      *   tags={"ExchangeRates"},
-     *   path="/exchange-rates-update",
-     *   summary="Get daily exchange rates",
+     *   path="/exchange-rates/current",
+     *   summary="Get the current, locally stored EXR",
      *   @OA\Response(
      *     response=200,
      *     description="OK",
@@ -46,8 +46,8 @@ class ExchangeRateController extends Controller
      *   @OA\Response(response=500, description="Server error"),
      * )
      */
-    public function exrUpdate(): JsonResponse
+    public function show(): JsonResponse
     {
-        return $this->json($this->exchangeRateService->getLatestEXR());
+        return $this->json(ExchangeRateResource::make($this->exchangeRateService->showLatestEXR()));
     }
 }

@@ -21,5 +21,11 @@ return [
         'detail' => 'dataonly',
         'format' => 'jsondata',
         'lastNObservations' => 1
+    ],
+
+    'daily-cron-time' => [
+        '17:51',
+        '17:52',
+        '17:53'
     ]
 ];

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ExchangeRate;
 use App\Repositories\ExchangeRateRepository;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -17,11 +18,11 @@ class ExchangeRateService
 
     public function __construct(ExchangeRateRepository $exchangeRateRepository)
     {
-        $this->apiUrl = config('ecb-path.base_api_path') . 'EXR/D.'
-            . config('ecb-path.currency') . '.'
-            . config('ecb-path.currency_denominator') . '.'
-            . config('ecb-path.exchange_rate_type') . '.'
-            . config('ecb-path.exchange_rate_context');
+        $this->apiUrl = config('ecb.base_api_path') . 'EXR/D.'
+            . config('ecb.currency') . '.'
+            . config('ecb.currency_denominator') . '.'
+            . config('ecb.exchange_rate_type') . '.'
+            . config('ecb.exchange_rate_context');
 
         $this->exchangeRateRepository = $exchangeRateRepository;
     }
@@ -36,20 +37,28 @@ class ExchangeRateService
         return $this->exchangeRateRepository->getAll();
     }
 
+    public function showLatestExr(): ExchangeRate|null
+    {
+        return $this->exchangeRateRepository->getLastElement(['value', 'exchange_rate_date', 'refreshed_at']);
+    }
+
     public function getLatestEXR(): array|bool
     {
-        $response = $this->callEcbApi(config('ecb-path.update-params'));
+        $latestExchangeRate = $this->exchangeRateRepository->getLastElement(['refreshed_at']);
+        $response = $this->callEcbApi(
+            empty($latestExchangeRate) ? config('ecb.init-params') : [
+                'detail' => 'dataonly',
+                'format' => 'jsondata',
+                'updatedAfter' => $latestExchangeRate->getTimezoneRefreshDate()
+            ]
+        );
 
         if ($response->status() === ResponseCodes::HTTP_OK) {
-            return $this->parseExrData($response->body());
+            $newValue = ExchangeRateService::parseExrData($response->body());
+            $this->exchangeRateRepository->updateActual(array_values($newValue)[0]);
         }
 
         return false;
-    }
-
-    public function initEXR(): string
-    {
-        return $this->callEcbApi(config('ecb-path.init-params'));
     }
 
     public function getIntervalOfExchangeRates(string $from, string $to): void
@@ -79,7 +88,7 @@ class ExchangeRateService
         }
     }
 
-    private function parseExrData(string $responseBody): array
+    private static function parseExrData(string $responseBody): array
     {
         $data = json_decode($responseBody, true);
 
