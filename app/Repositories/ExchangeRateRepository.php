@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 
 class ExchangeRateRepository
 {
-    public function addValue(string $value, string $date): void
+    public function addValue(string|null $value, string $date): void
     {
         ExchangeRate::updateOrCreate(
             [

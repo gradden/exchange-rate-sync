@@ -6,8 +6,10 @@ use App\Models\ExchangeRate;
 use App\Repositories\ExchangeRateRepository;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response as ResponseCodes;
 use Illuminate\Support\Facades\Http;
 
@@ -44,14 +46,7 @@ class ExchangeRateService
 
     public function getLatestEXR(): array|bool
     {
-        $latestExchangeRate = $this->exchangeRateRepository->getLastElement(['refreshed_at']);
-        $response = $this->callEcbApi(
-            empty($latestExchangeRate) ? config('ecb.init-params') : [
-                'detail' => 'dataonly',
-                'format' => 'jsondata',
-                'updatedAfter' => $latestExchangeRate->getTimezoneRefreshDate()
-            ]
-        );
+        $response = $this->callEcbApi(config('ecb.update-params'));
 
         if ($response->status() === ResponseCodes::HTTP_OK) {
             $newValue = ExchangeRateService::parseExrData($response->body());
@@ -78,13 +73,23 @@ class ExchangeRateService
         $period = CarbonPeriod::create(array_keys($values)[0], $endPeriod);
         $currentValue = array_values($values)[0];
 
-        foreach ($period as $date) {
-            $currentDate = $date->format('Y-m-d');
-            if (array_key_exists($currentDate, $values)) {
-                $currentValue = $values[$currentDate];
+        try{
+            DB::beginTransaction();
+
+            foreach ($period as $date) {
+                $currentDate = $date->format('Y-m-d');
+                if (array_key_exists($currentDate, $values)) {
+                    $currentValue = $values[$currentDate];
+                }
+
+                $this->exchangeRateRepository->addValue($currentValue, $currentDate);
+                DB::commit();
             }
 
-            $this->exchangeRateRepository->addValue($currentValue, $currentDate);
+
+        } catch (Exception $e) {
+            var_dump($e->getMessage());
+            DB::rollBack();
         }
     }
 

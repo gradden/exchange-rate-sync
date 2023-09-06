@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('exchange_rates', function (Blueprint $table) {
             $table->id();
-            $table->decimal('value');
-            $table->date('exchange_rate_date');
+            $table->decimal('value')->nullable();
+            $table->date('exchange_rate_date')->unique();
             $table->timestamps();
         });
     }

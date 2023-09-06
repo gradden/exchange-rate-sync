@@ -12,14 +12,11 @@ class Kernel extends ConsoleKernel
 {
     protected function schedule(Schedule $schedule): void
     {
-//        foreach (config('ecb.daily-cron-time') as $time) {
-//            $schedule->job(new ExchangeRateSyncCurrentJob(new ExchangeRateService(new ExchangeRateRepository())))
-//                ->timezone('Europe/Budapest')
-//                ->dailyAt($time);
-//        }
-        $schedule->job(new ExchangeRateSyncCurrentJob(new ExchangeRateService(new ExchangeRateRepository())))
-            ->timezone('Europe/Budapest')
-            ->everyFiveSeconds();
+        foreach (config('ecb.daily-cron-time') as $time) {
+            $schedule->job(new ExchangeRateSyncCurrentJob(new ExchangeRateService(new ExchangeRateRepository())))
+                ->timezone('Europe/Budapest')
+                ->dailyAt($time);
+        }
     }
 
     protected function commands(): void

@@ -14,18 +14,12 @@ return [
     'update-params' => [
         'detail' => 'dataonly',
         'format' => 'jsondata',
-        'updatedAfter' => Carbon::now()->setTimezone('Europe/Budapest')->subDay()->toAtomString()
-    ],
-
-    'init-params' => [
-        'detail' => 'dataonly',
-        'format' => 'jsondata',
         'lastNObservations' => 1
     ],
 
     'daily-cron-time' => [
-        '17:51',
-        '17:52',
-        '17:53'
+        '01:00',
+        '10:00',
+        '13:00'
     ]
 ];

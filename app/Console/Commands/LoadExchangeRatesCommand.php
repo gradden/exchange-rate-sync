@@ -30,6 +30,7 @@ class LoadExchangeRatesCommand extends Command
                 $this->option('from'),
                 $this->option('to')
             );
+
         } catch (Exception $e) {
             throw new SyncExchangeRateException();
         }

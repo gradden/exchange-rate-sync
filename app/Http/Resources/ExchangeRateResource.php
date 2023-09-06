@@ -13,7 +13,8 @@ class ExchangeRateResource extends JsonResource
         return [
             'date' => $this->resource->exchange_rate_date,
             'observation' => $this->resource->value,
-            'refreshedAt' => $this->resource->refreshed_at
+            'refreshedAt' => $this->resource->refreshed_at,
+            'isCurrent' => $this->resource->exchange_rate_date === Carbon::now()->toDateString()
         ];
     }
 }
