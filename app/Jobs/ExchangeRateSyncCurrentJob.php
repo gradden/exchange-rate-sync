@@ -14,7 +14,10 @@ use Illuminate\Support\Facades\Log;
 
 class ExchangeRateSyncCurrentJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     private ExchangeRateService $exchangeRateService;
 

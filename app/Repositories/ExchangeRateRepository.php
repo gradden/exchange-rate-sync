@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Models\ExchangeRate;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 
 class ExchangeRateRepository
 {

@@ -20,7 +20,8 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class Controller extends BaseController
 {
-    use AuthorizesRequests, ValidatesRequests;
+    use AuthorizesRequests;
+    use ValidatesRequests;
 
     public function json(mixed $data, int $statusCode = Response::HTTP_OK): JsonResponse
     {
