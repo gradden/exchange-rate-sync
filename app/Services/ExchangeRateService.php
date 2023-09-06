@@ -46,11 +46,26 @@ class ExchangeRateService
 
     public function getLatestEXR(): array|bool
     {
-        $response = $this->callEcbApi(config('ecb.update-params'));
+        $lastElement = $this->exchangeRateRepository->getLastElement(['exchange_rate_date', 'value']) ?? null;
+        $params =
+            (!empty($lastElement) && $lastElement->exchange_rate_date < Carbon::now()->toDateString()) ?
+                [
+                    'detail' => 'dataonly',
+                    'format' => 'jsondata',
+                    'startPeriod' => $lastElement->exchange_rate_date,
+                    'endPeriod' => Carbon::now()->toDateString()
+                ] : config('ecb.update-params');
+
+        $response = $this->callEcbApi($params);
 
         if ($response->status() === ResponseCodes::HTTP_OK) {
-            $newValue = ExchangeRateService::parseEXRData($response->body());
-            $this->exchangeRateRepository->updateActual(array_values($newValue)[0]);
+            $newValues = ExchangeRateService::parseEXRData($response->body());
+            $this->syncToDB(
+                $lastElement->exchange_rate_date ?? Carbon::now()->toDateString(),
+                Carbon::now()->toDateString(),
+                $lastElement->value ?? null,
+                $newValues
+            );
         }
 
         return false;
@@ -70,27 +85,8 @@ class ExchangeRateService
 
         $values = $this->parseEXRData($response->body());
 
-        $period = CarbonPeriod::create(array_keys($values)[0], $endPeriod);
-        $currentValue = array_values($values)[0];
+        $this->syncToDB(array_keys($values)[0], $endPeriod, array_values($values)[0], $values);
 
-        try{
-            DB::beginTransaction();
-
-            foreach ($period as $date) {
-                $currentDate = $date->format('Y-m-d');
-                if (array_key_exists($currentDate, $values)) {
-                    $currentValue = $values[$currentDate];
-                }
-
-                $this->exchangeRateRepository->addValue($currentValue, $currentDate);
-                DB::commit();
-            }
-
-
-        } catch (Exception $e) {
-            var_dump($e->getMessage());
-            DB::rollBack();
-        }
     }
 
     private static function parseEXRData(string $responseBody): array
@@ -108,5 +104,31 @@ class ExchangeRateService
         }
 
         return $observations;
+    }
+
+    private function syncToDB(
+        string $startPeriod,
+        string $endPeriod,
+        string|null $currentValue,
+        array $responseData
+    ): void {
+        $period = CarbonPeriod::create($startPeriod, $endPeriod);
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($period as $date) {
+                $currentDate = $date->format('Y-m-d');
+                if (array_key_exists($currentDate, $responseData)) {
+                    $currentValue = $responseData[$currentDate];
+                }
+
+                $this->exchangeRateRepository->addValue($currentValue, $currentDate);
+            }
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+        }
     }
 }
