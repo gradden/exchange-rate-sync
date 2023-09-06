@@ -13,14 +13,13 @@
     <arg value= "s"/>
 
     <!-- Our base rule: set to PSR12 -->
-    <rule ref="PSR12">
-        <exclude name="PSR12.Operators.OperatorSpacing.NoSpaceBefore"/>
-        <exclude name="PSR12.Operators.OperatorSpacing.NoSpaceAfter"/>
+    <rule ref="PSR2">
+        <exclude name="PSR2.Operators.OperatorSpacing.NoSpaceBefore"/>
+        <exclude name="PSR2.Operators.OperatorSpacing.NoSpaceAfter"/>
     </rule>
 
     <rule ref= "Generic.Files.LineLength">
         <properties>
-            <property name="lineLimit" value="80"/>
             <property name="absoluteLineLimit" value="120"/>
         </properties>
     </rule>
