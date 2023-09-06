@@ -39,7 +39,7 @@ class ExchangeRateService
         return $this->exchangeRateRepository->getAll();
     }
 
-    public function showLatestExr(): ExchangeRate|null
+    public function showLatestEXR(): ExchangeRate|null
     {
         return $this->exchangeRateRepository->getLastElement(['value', 'exchange_rate_date', 'refreshed_at']);
     }
@@ -49,7 +49,7 @@ class ExchangeRateService
         $response = $this->callEcbApi(config('ecb.update-params'));
 
         if ($response->status() === ResponseCodes::HTTP_OK) {
-            $newValue = ExchangeRateService::parseExrData($response->body());
+            $newValue = ExchangeRateService::parseEXRData($response->body());
             $this->exchangeRateRepository->updateActual(array_values($newValue)[0]);
         }
 
@@ -68,7 +68,7 @@ class ExchangeRateService
             'endPeriod' => $endPeriod->toDateString()
         ]);
 
-        $values = $this->parseExrData($response->body());
+        $values = $this->parseEXRData($response->body());
 
         $period = CarbonPeriod::create(array_keys($values)[0], $endPeriod);
         $currentValue = array_values($values)[0];
@@ -93,7 +93,7 @@ class ExchangeRateService
         }
     }
 
-    private static function parseExrData(string $responseBody): array
+    private static function parseEXRData(string $responseBody): array
     {
         $data = json_decode($responseBody, true);
 
