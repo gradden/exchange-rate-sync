@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         foreach (config('ecb.daily-cron-time') as $time) {
-            $schedule->job(new ExchangeRateSyncCurrentJob(new ExchangeRateService(new ExchangeRateRepository())))
+            $schedule->job(ExchangeRateSyncCurrentJob::class)
                 ->timezone('Europe/Budapest')
                 ->dailyAt($time);
         }

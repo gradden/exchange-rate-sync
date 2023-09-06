@@ -31,30 +31,19 @@ class ExchangeRateService
 
     private function callEcbApi(array $params = []): Response
     {
-        return Http::get($this->apiUrl, $params);
+        return Http::get(
+            $this->apiUrl,
+            array_merge(['detail' => 'dataonly', 'format' => 'jsondata'], $params)
+        );
     }
 
-    public function getLocalEXRData(): Collection
-    {
-        return $this->exchangeRateRepository->getAll();
-    }
-
-    public function showLatestEXR(): ExchangeRate|null
-    {
-        return $this->exchangeRateRepository->getLastElement(['value', 'exchange_rate_date', 'refreshed_at']);
-    }
-
-    public function getLatestEXR(): array|bool
+    public function getLatestEXR(): void
     {
         $lastElement = $this->exchangeRateRepository->getLastElement(['exchange_rate_date', 'value']) ?? null;
-        $params =
-            (!empty($lastElement) && $lastElement->exchange_rate_date < Carbon::now()->toDateString()) ?
-                [
-                    'detail' => 'dataonly',
-                    'format' => 'jsondata',
-                    'startPeriod' => $lastElement->exchange_rate_date,
-                    'endPeriod' => Carbon::now()->toDateString()
-                ] : config('ecb.update-params');
+
+        $params = (!empty($lastElement) && $lastElement->exchange_rate_date < Carbon::now()->toDateString()) ?
+                ['startPeriod' => $lastElement->exchange_rate_date, 'endPeriod' => Carbon::now()->toDateString()] :
+                config('ecb.update-params');
 
         $response = $this->callEcbApi($params);
 
@@ -63,12 +52,10 @@ class ExchangeRateService
             $this->syncToDB(
                 $lastElement->exchange_rate_date ?? Carbon::now()->toDateString(),
                 Carbon::now()->toDateString(),
-                $lastElement->value ?? null,
+                $lastElement->getRawOriginal('value') ?? null,
                 $newValues
             );
         }
-
-        return false;
     }
 
     public function getIntervalOfExchangeRates(string $from, string $to): void
@@ -77,8 +64,6 @@ class ExchangeRateService
         $endPeriod = Carbon::parse($to);
 
         $response = $this->callEcbApi([
-            'detail' => 'dataonly',
-            'format' => 'jsondata',
             'startPeriod' => $startPeriod->toDateString(),
             'endPeriod' => $endPeriod->toDateString()
         ]);
@@ -86,7 +71,6 @@ class ExchangeRateService
         $values = $this->parseEXRData($response->body());
 
         $this->syncToDB(array_keys($values)[0], $endPeriod, array_values($values)[0], $values);
-
     }
 
     private static function parseEXRData(string $responseBody): array
@@ -110,7 +94,7 @@ class ExchangeRateService
         string $startPeriod,
         string $endPeriod,
         string|null $currentValue,
-        array $responseData
+        array $newValues
     ): void {
         $period = CarbonPeriod::create($startPeriod, $endPeriod);
 
@@ -119,11 +103,11 @@ class ExchangeRateService
 
             foreach ($period as $date) {
                 $currentDate = $date->format('Y-m-d');
-                if (array_key_exists($currentDate, $responseData)) {
-                    $currentValue = $responseData[$currentDate];
+                if (array_key_exists($currentDate, $newValues)) {
+                    $currentValue = $newValues[$currentDate];
                 }
 
-                $this->exchangeRateRepository->addValue($currentValue, $currentDate);
+                $this->exchangeRateRepository->updateOrCreate($currentValue, $currentDate);
             }
 
             DB::commit();
