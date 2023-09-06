@@ -3,8 +3,6 @@
 namespace App\Console;
 
 use App\Jobs\ExchangeRateSyncCurrentJob;
-use App\Repositories\ExchangeRateRepository;
-use App\Services\ExchangeRateService;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 

@@ -11,14 +11,14 @@ use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
 
 class ExchangeRateCrudController extends CrudController
 {
-    use ListOperation;
     use DeleteOperation;
+    use ListOperation;
     use ShowOperation;
 
     public function setup(): void
     {
         CRUD::setModel(\App\Models\ExchangeRate::class);
-        CRUD::setRoute(config('backpack.base.route_prefix') . '/exchange-rate');
+        CRUD::setRoute(config('backpack.base.route_prefix').'/exchange-rate');
         CRUD::setEntityNameStrings('exchange rate', 'exchange rates');
     }
 

@@ -2,20 +2,19 @@
 
 namespace App\Services;
 
-use App\Models\ExchangeRate;
 use App\Repositories\ExchangeRateRepository;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Exception;
 use Illuminate\Http\Client\Response;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpFoundation\Response as ResponseCodes;
 use Illuminate\Support\Facades\Http;
+use Symfony\Component\HttpFoundation\Response as ResponseCodes;
 
 class ExchangeRateService
 {
     private string $apiUrl;
+
     private ExchangeRateRepository $exchangeRateRepository;
 
     public function __construct(ExchangeRateRepository $exchangeRateRepository)
@@ -65,7 +64,7 @@ class ExchangeRateService
 
         $response = $this->callEcbApi([
             'startPeriod' => $startPeriod->toDateString(),
-            'endPeriod' => $endPeriod->toDateString()
+            'endPeriod' => $endPeriod->toDateString(),
         ]);
 
         $values = $this->parseEXRData($response->body());
@@ -77,7 +76,7 @@ class ExchangeRateService
     {
         $data = json_decode($responseBody, true);
 
-        $values = $data['dataSets'][0]['series']["0:0:0:0:0"]["observations"];
+        $values = $data['dataSets'][0]['series']['0:0:0:0:0']['observations'];
         $dates = $data['structure']['dimensions']['observation'][0]['values'];
         $observations = [];
         $i = 0;
@@ -93,7 +92,7 @@ class ExchangeRateService
     private function syncToDB(
         string $startPeriod,
         string $endPeriod,
-        string|null $currentValue,
+        ?string $currentValue,
         array $newValues
     ): void {
         $period = CarbonPeriod::create($startPeriod, $endPeriod);

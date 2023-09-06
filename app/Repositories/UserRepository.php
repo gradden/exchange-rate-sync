@@ -11,11 +11,11 @@ class UserRepository
     {
         User::updateOrCreate(
             [
-                'email' => config('users.default_admin_email')
+                'email' => config('users.default_admin_email'),
             ],
             [
                 'name' => 'Backpack Admin',
-                'password' => Hash::make(config('users.default_admin_password'))
+                'password' => Hash::make(config('users.default_admin_password')),
             ]
         );
     }

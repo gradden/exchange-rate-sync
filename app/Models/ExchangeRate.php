@@ -16,7 +16,7 @@ class ExchangeRate extends Model
     protected $fillable = [
         'value',
         'exchange_rate_date',
-        'refreshed_at'
+        'refreshed_at',
     ];
 
     public function getTimezoneRefreshDate(): string
@@ -27,7 +27,7 @@ class ExchangeRate extends Model
     protected function value(): Attribute
     {
         return Attribute::make(
-            get: fn (string $value) => $value . ' ' . config('ecb.currency')
+            get: fn (string $value) => $value.' '.config('ecb.currency')
         );
     }
 }
