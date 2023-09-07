@@ -4,12 +4,11 @@ namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
 {
-    use ExceptionTrait;
-
     protected $dontFlash = [
         'current_password',
         'password',
@@ -23,7 +22,11 @@ class Handler extends ExceptionHandler
         });
 
         $this->renderable(function (Throwable $e) {
-            return $this->custom($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR, $e);
+            if ($e instanceof NotFoundHttpException) {
+                return response()->view('vendor.backpack.ui.errors.404', ['exception' => $e]);
+            }
+
+            return response()->view('vendor.backpack.ui.errors.500', ['exception' => $e]);
         });
     }
 }

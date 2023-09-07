@@ -12,7 +12,7 @@ trait ExceptionTrait
     {
         $response = [
             'errorMsg' => $message,
-            'responseCode' => $statusCode
+            'responseCode' => $statusCode,
         ];
 
         if (config('app.debug')) {
@@ -29,7 +29,7 @@ trait ExceptionTrait
     private function logException(string $exceptionMessage, string $trace): void
     {
         Log::info($exceptionMessage, [
-            'trace' => $trace
+            'trace' => $trace,
         ]);
     }
 }
