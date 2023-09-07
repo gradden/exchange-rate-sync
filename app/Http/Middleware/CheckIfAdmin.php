@@ -25,9 +25,8 @@ class CheckIfAdmin
      * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user
      * @return bool
      */
-    private function checkIfUserIsAdmin($user)
+    private function checkIfUserIsAdmin($user): bool
     {
-        // return ($user->is_admin == 1);
         return true;
     }
 
