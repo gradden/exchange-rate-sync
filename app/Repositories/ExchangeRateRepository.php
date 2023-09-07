@@ -15,7 +15,7 @@ class ExchangeRateRepository
             ],
             [
                 'value' => $value,
-                'refreshed_at' => Carbon::now()->toAtomString(),
+                'refreshed_at' => Carbon::now()->toDateTimeString(),
             ]
         );
     }
@@ -25,5 +25,12 @@ class ExchangeRateRepository
         return ExchangeRate::select($columns)
             ->orderBy('exchange_rate_date', 'desc')
             ->first();
+    }
+
+    public function getCurrent(): ?ExchangeRate
+    {
+        return ExchangeRate::select(['exchange_rate_date', 'value', 'refreshed_at'])
+            ->where('exchange_rate_date', '=', Carbon::now()->toDateString())
+            ?->first();
     }
 }
