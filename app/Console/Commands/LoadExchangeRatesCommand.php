@@ -39,8 +39,8 @@ class LoadExchangeRatesCommand extends Command
             }
 
             $this->exchangeRateService->getIntervalOfExchangeRates(
-                $this->option('from'),
-                $this->option('to')
+                $from,
+                $to
             );
         } catch (Exception $e) {
             Log::info('Sync Exception: {errorMsg} : {file} in {line}', [
