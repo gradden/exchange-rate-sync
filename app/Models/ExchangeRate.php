@@ -19,15 +19,10 @@ class ExchangeRate extends Model
         'refreshed_at',
     ];
 
-    public function getTimezoneRefreshDate(): string
-    {
-        return Carbon::parse($this->refreshed_at)->setTimezone('Europe/Budapest')->toAtomString();
-    }
-
     protected function value(): Attribute
     {
         return Attribute::make(
-            get: fn (string $value) => $value.' '.config('ecb.currency')
+            get: fn (string|null $value) => $value.' '.config('ecb.currency')
         );
     }
 }

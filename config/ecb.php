@@ -11,9 +11,12 @@ return [
     'exchange_rate_type' => env('ECB_EXCHANGE_RATE_TYPE', 'SP00'),
     'exchange_rate_context' => env('ECB_EXCHANGE_RATE_CONTEXT', 'A'),
 
-    'update-params' => [
+    'query-settings' => [
         'detail' => 'dataonly',
         'format' => 'jsondata',
+    ],
+
+    'update-params' => [
         'lastNObservations' => 1
     ],
 

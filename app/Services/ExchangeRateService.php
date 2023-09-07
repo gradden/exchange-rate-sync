@@ -9,7 +9,7 @@ use Exception;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Symfony\Component\HttpFoundation\Response as ResponseCodes;
+use Illuminate\Support\Facades\Log;
 
 class ExchangeRateService
 {
@@ -32,29 +32,33 @@ class ExchangeRateService
     {
         return Http::get(
             $this->apiUrl,
-            array_merge(['detail' => 'dataonly', 'format' => 'jsondata'], $params)
+            array_merge(config('ecb.query-settings'), $params)
         );
     }
 
     public function getLatestEXR(): void
     {
+        $now = Carbon::now()->toDateString();
         $lastElement = $this->exchangeRateRepository->getLastElement(['exchange_rate_date', 'value']) ?? null;
-
-        $params = (!empty($lastElement) && $lastElement->exchange_rate_date < Carbon::now()->toDateString()) ?
-            ['startPeriod' => $lastElement->exchange_rate_date, 'endPeriod' => Carbon::now()->toDateString()] :
-            config('ecb.update-params');
+        $params = [
+            'startPeriod' => $lastElement?->exchange_rate_date ?? $now,
+            'endPeriod' => $now
+        ];
 
         $response = $this->callEcbApi($params);
 
-        if ($response->status() === ResponseCodes::HTTP_OK) {
+        if ($newValues = ExchangeRateService::parseEXRData($response->body())) {
+            $startPeriod = $lastElement?->exchange_rate_date ?? $now;
+            $currentValue = $lastElement?->getRawOriginal('value') ?? null;
+        } else {
+            $response = $this->callEcbApi(config('ecb.update-params'));
             $newValues = ExchangeRateService::parseEXRData($response->body());
-            $this->syncToDB(
-                $lastElement->exchange_rate_date ?? Carbon::now()->toDateString(),
-                Carbon::now()->toDateString(),
-                $lastElement->getRawOriginal('value') ?? null,
-                $newValues
-            );
+
+            $startPeriod = array_keys($newValues)[0];
+            $currentValue = array_values($newValues)[0] ?? null;
         }
+
+        $this->syncToDB($startPeriod, $now, $currentValue, $newValues);
     }
 
     public function getIntervalOfExchangeRates(string $from, string $to): void
@@ -72,21 +76,25 @@ class ExchangeRateService
         $this->syncToDB(array_keys($values)[0], $endPeriod, array_values($values)[0], $values);
     }
 
-    private static function parseEXRData(string $responseBody): array
+    private static function parseEXRData(string $responseBody): array|false
     {
-        $data = json_decode($responseBody, true);
+        if (!empty($responseBody)) {
+            $data = json_decode($responseBody, true);
 
-        $values = $data['dataSets'][0]['series']['0:0:0:0:0']['observations'];
-        $dates = $data['structure']['dimensions']['observation'][0]['values'];
-        $observations = [];
-        $i = 0;
+            $values = $data['dataSets'][0]['series']['0:0:0:0:0']['observations'];
+            $dates = $data['structure']['dimensions']['observation'][0]['values'];
+            $observations = [];
+            $i = 0;
 
-        foreach ($values as $observation) {
-            $observations[$dates[$i]['id']] = $observation[0];
-            $i++;
+            foreach ($values as $observation) {
+                $observations[$dates[$i]['id']] = $observation[0];
+                $i++;
+            }
+
+            return $observations;
+        } else {
+            return false;
         }
-
-        return $observations;
     }
 
     private function syncToDB(
@@ -111,6 +119,7 @@ class ExchangeRateService
 
             DB::commit();
         } catch (Exception $e) {
+            Log::info('Failed to sync in DB: {errorMsg}', ['errorMsg' => $e->getMessage()]);
             DB::rollBack();
         }
     }
