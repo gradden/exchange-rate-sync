@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Exceptions\SyncExchangeRateException;
 use App\Services\ExchangeRateService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -28,6 +29,15 @@ class LoadExchangeRatesCommand extends Command
     public function handle(): int
     {
         try {
+            $now = Carbon::now()->toDateString();
+            $from = $this->option('from');
+            $to = $this->option('to');
+
+            if ($from > $now || $to > $now)
+            {
+                throw new SyncExchangeRateException(__('errors.date_limit_reached'));
+            }
+
             $this->exchangeRateService->getIntervalOfExchangeRates(
                 $this->option('from'),
                 $this->option('to')
