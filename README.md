@@ -4,7 +4,7 @@
    git clone https://github.com/gradden/exchange-rate-sync.git
 ```
 
-2. Make a .env file, set up docker and enter into the container's terminal
+2. Make a .env file, set up docker and enter to the container's terminal
 ```
    cd exchange-rate-sync
    cp .env.example .env
@@ -12,7 +12,7 @@
    docker exec -it -u application exchange-rate-sync bash
 ```
 
-3. Composer and Laravel
+3. Composer and Laravel initialization
 ```
    composer install
    php artisan key:generate
@@ -24,11 +24,13 @@ BACKPACK_ADMIN_PASSWORD`)
 This will make possible to log in to the dashboard.
 
 ### ECB config
-The app communicates with the European Central Bank's API server (https://data-api.ecb.europa.eu/). This URL can be modified in the `config/ecb.php` if it changes.
+The app communicates with the European Central Bank's API server (https://data-api.ecb.europa.eu/). 
+In default cases the currency stored in HUF and the currency denominator is EUR.
+These parameters can be modified in the `config/ecb.php` if necessary.
 
 ## Exchange Rate Sync and CRON Job
-The cron job will update the values in the DB. 
-If the job detects a gap between the last exchange rate date and today's date in the database, the job will synchronize it back.
+The cron job will update the current date's value in the DB. 
+If the job detects a gap between the last exchange rate date and today's date in the database, the job will synchronize the rest of it.
 To fire up the cron job, you'll need to run this command:
 ```
 php artisan schedule:work
