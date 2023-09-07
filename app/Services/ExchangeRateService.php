@@ -41,8 +41,8 @@ class ExchangeRateService
         $lastElement = $this->exchangeRateRepository->getLastElement(['exchange_rate_date', 'value']) ?? null;
 
         $params = (!empty($lastElement) && $lastElement->exchange_rate_date < Carbon::now()->toDateString()) ?
-                ['startPeriod' => $lastElement->exchange_rate_date, 'endPeriod' => Carbon::now()->toDateString()] :
-                config('ecb.update-params');
+            ['startPeriod' => $lastElement->exchange_rate_date, 'endPeriod' => Carbon::now()->toDateString()] :
+            config('ecb.update-params');
 
         $response = $this->callEcbApi($params);
 
@@ -90,10 +90,10 @@ class ExchangeRateService
     }
 
     private function syncToDB(
-        string $startPeriod,
-        string $endPeriod,
+        string  $startPeriod,
+        string  $endPeriod,
         ?string $currentValue,
-        array $newValues
+        array   $newValues
     ): void {
         $period = CarbonPeriod::create($startPeriod, $endPeriod);
 
