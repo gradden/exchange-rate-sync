@@ -2,11 +2,13 @@
 
 namespace App\Services;
 
+use App\Exceptions\EcbApiException;
 use App\Repositories\ExchangeRateRepository;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Exception;
 use Illuminate\Http\Client\Response;
+use Symfony\Component\HttpFoundation\Response as ResponseCode;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -28,12 +30,22 @@ class ExchangeRateService
         $this->exchangeRateRepository = $exchangeRateRepository;
     }
 
+    /**
+     * @throws EcbApiException
+     */
     private function callEcbApi(array $params = []): Response
     {
-        return Http::get(
+        $response = Http::get(
             $this->apiUrl,
             array_merge(config('ecb.query-settings'), $params)
         );
+
+        if ($response->status() !== ResponseCode::HTTP_OK)
+        {
+            throw new EcbApiException(code: $response->status());
+        }
+
+        return $response;
     }
 
     public function getLatestEXR(): void
